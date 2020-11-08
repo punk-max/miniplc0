@@ -440,7 +440,7 @@ public final class Analyser {
                 // 标识符没初始化
                 throw new AnalyzeError(ErrorCode.NotInitialized, /* 当前位置 */ nameToken.getStartPos());
             }
-            var offset = getOffset(name, null);
+            var offset = getOffset(name, nameToken.getStartPos());
             instructions.add(new Instruction(Operation.LOD, offset));
         } else if (check(TokenType.Uint)) {
             // 是整数
