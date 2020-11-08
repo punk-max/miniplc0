@@ -51,7 +51,7 @@ public class Tokenizer {
         StringBuffer stringBuffer = new StringBuffer();
         Pos cPos = it.currentPos();
         Pos nPos = it.nextPos();
-        while(Character.isDigit(it.peekChar())){
+        while(it.peekChar()>='0' && it.peekChar()<='9'){
             stringBuffer.append(it.nextChar());
         }
         nPos = it.currentPos();
@@ -71,7 +71,7 @@ public class Tokenizer {
         StringBuffer stringBuffer = new StringBuffer();
         Pos cPos = it.currentPos();
         Pos nPos = it.nextPos();
-        while(Character.isDigit(it.peekChar()) || (it.peekChar()>='A' && it.peekChar()<='Z') || (it.peekChar()>='a' && it.peekChar()<='z')){
+        while((it.peekChar()>='0' && it.peekChar()<='9') || (it.peekChar()>='A' && it.peekChar()<='Z') || (it.peekChar()>='a' && it.peekChar()<='z')){
             stringBuffer.append(it.nextChar());
         }
         nPos = it.currentPos();
