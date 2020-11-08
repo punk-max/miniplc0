@@ -217,11 +217,11 @@ public final class Analyser {
             // 常量声明语句 -> 'const' 变量名 '=' 常表达式 ';'
 
             // 变量名
-            var nameToken = expect(TokenType.Ident);
+            var token = expect(TokenType.Ident);
 
             // 加入符号表
-            String name = (String) nameToken.getValue();
-            addSymbol(name, true, true, nameToken.getStartPos());
+            String name = (String) token.getValue();
+            addSymbol(name, true, true, token.getStartPos());
 
             // 等于号
             expect(TokenType.Equal);
@@ -247,7 +247,7 @@ public final class Analyser {
             // 变量声明语句 -> 'var' 变量名 ('=' 表达式)? ';'
 
             // 变量名
-            var nameToken = expect(TokenType.Ident);
+            var token = expect(TokenType.Ident);
             // 变量初始化了吗
             boolean initialized = false;
 
@@ -267,8 +267,8 @@ public final class Analyser {
             expect(TokenType.Semicolon);
 
             // 加入符号表，请填写名字和当前位置（报错用）
-            String name = /* 名字 */ nameToken.getValueString();
-            addSymbol(name, initialized, false, /* 当前位置 */ nameToken.getStartPos());
+            String name = /* 名字 */ token.getValueString();
+            addSymbol(name, initialized, false, /* 当前位置 */ token.getStartPos());
 
             // 如果没有初始化的话在栈里推入一个初始值
             if (!initialized) {
@@ -414,7 +414,7 @@ public final class Analyser {
         }
     }
 
-    private void analyseFactor() throws CompileError {//Mark
+    private void analyseFactor() throws CompileError {
         // 因子 -> 符号? (标识符 | 无符号整数 | '(' 表达式 ')')
 
         boolean negate;
@@ -429,18 +429,18 @@ public final class Analyser {
 
         if (check(TokenType.Ident)) {
             // 是标识符
-            var nameToken=expect(TokenType.Ident);
+            var token=expect(TokenType.Ident);
             // 加载标识符的值
-            String name = /* 快填 */ nameToken.getValueString();
+            String name = /* 快填 */ token.getValueString();
             var symbol = symbolTable.get(name);
             if (symbol == null) {
                 // 没有这个标识符
-                throw new AnalyzeError(ErrorCode.NotDeclared, /* 当前位置 */ nameToken.getStartPos());
+                throw new AnalyzeError(ErrorCode.NotDeclared, /* 当前位置 */ token.getStartPos());
             } else if (!symbol.isInitialized) {
                 // 标识符没初始化
-                throw new AnalyzeError(ErrorCode.NotInitialized, /* 当前位置 */ nameToken.getStartPos());
+                throw new AnalyzeError(ErrorCode.NotInitialized, /* 当前位置 */ token.getStartPos());
             }
-            var offset = getOffset(name, nameToken.getStartPos());
+            var offset = getOffset(name, token.getStartPos());
             instructions.add(new Instruction(Operation.LOD, offset));
         } else if (check(TokenType.Uint)) {
             // 是整数
