@@ -14,7 +14,7 @@ import miniplc0java.util.Pos;
 
 import java.util.*;
 
-public final class Analyse {
+public final class Analyser {
 
     Tokenizer tokenizer;
     ArrayList<Instruction> instructions;
