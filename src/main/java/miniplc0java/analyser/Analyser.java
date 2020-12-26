@@ -18,7 +18,6 @@ public final class Analyser {
 
     Tokenizer tokenizer;
     ArrayList<Instruction> instructions;
-
     /** 当前偷看的 token */
     Token peekedToken = null;
 
