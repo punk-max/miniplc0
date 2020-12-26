@@ -259,7 +259,6 @@ public final class Analyser {
             }
             else{
                 initialized = false;
-                instructions.add(new Instruction(Operation.LIT,0));
             }
             // 分析初始化的表达式
 
