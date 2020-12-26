@@ -205,7 +205,7 @@ public final class Analyser {
         analyseConstantDeclaration();
         analyseVariableDeclaration();
         analyseStatementSequence();
-        // throw new Error("Not implemented");
+        //throw new Error("Not implemented");
     }
 
     private void analyseConstantDeclaration() throws CompileError {
@@ -217,11 +217,11 @@ public final class Analyser {
             // 常量声明语句 -> 'const' 变量名 '=' 常表达式 ';'
 
             // 变量名
-            var nameToken = expect(TokenType.Ident);
+            var token = expect(TokenType.Ident);
 
             // 加入符号表
-            String name = (String) nameToken.getValue();
-            addSymbol(name, true, true, nameToken.getStartPos());
+            String name = (String) token.getValue();
+            addSymbol(name, true, true, token.getStartPos());
 
             // 等于号
             expect(TokenType.Equal);
@@ -239,25 +239,40 @@ public final class Analyser {
         }
     }
 
-    private void analyseVariableDeclaration() throws CompileError {
+    private void analyseVariableDeclaration() throws CompileError {//Mark
+        // 变量声明 -> 变量声明语句*
+
+        // 如果下一个 token 是 var 就继续
         while (nextIf(TokenType.Var) != null) {
+            // 变量声明语句 -> 'var' 变量名 ('=' 表达式)? ';'
+
             // 变量名
-            var nameToken = expect(TokenType.Ident);
-            boolean isInitialized;
-            // 如果有等于号，就赋值，否则不赋值
-            if(nextIf(TokenType.Equal)!=null)
+            var token = expect(TokenType.Ident);
+            // 变量初始化了吗
+            boolean initialized = false;
+
+            // 下个 token 是等于号吗？如果是的话分析初始化
+            if(nextIf(TokenType.Equal) != null)
             {
-                isInitialized=true;
+                initialized = true;
                 analyseExpression();
             }
             else{
-                isInitialized=false;
-                instructions.add(new Instruction(Operation.LIT,0));
+                initialized = false;
             }
+            // 分析初始化的表达式
+
             // 分号
             expect(TokenType.Semicolon);
-            //添加到符号表
-            addSymbol(nameToken.getValueString(),isInitialized,false,nameToken.getStartPos());
+
+            // 加入符号表，请填写名字和当前位置（报错用）
+            String name = /* 名字 */ token.getValueString();
+            addSymbol(name, initialized, false, /* 当前位置 */ token.getStartPos());
+
+            // 如果没有初始化的话在栈里推入一个初始值
+            if (!initialized) {
+                instructions.add(new Instruction(Operation.LIT, 0));
+            }
         }
     }
 
@@ -269,10 +284,10 @@ public final class Analyser {
             // 如果下一个 token 是……
             var peeked = peek();
             if (peeked.getTokenType() == TokenType.Ident) {
-                analyseAssignmentStatement();
                 // 调用相应的分析函数
                 // 如果遇到其他非终结符的 FIRST 集呢？
-            }
+                analyseAssignmentStatement();
+            } 
             else if(peeked.getTokenType() == TokenType.Print) {
                 analyseOutputStatement();
             }
@@ -284,7 +299,7 @@ public final class Analyser {
                 break;
             }
         }
-        // throw new Error("Not implemented");
+        //throw new Error("Not implemented");
     }
 
     private int analyseConstantExpression() throws CompileError {
@@ -337,12 +352,11 @@ public final class Analyser {
         // 赋值语句 -> 标识符 '=' 表达式 ';'
 
         // 分析这个语句
-
-        // 标识符是什么？
-        Token token= expect(TokenType.Ident);
+        Token token = expect(TokenType.Ident);
         expect(TokenType.Equal);
         analyseExpression();
         expect(TokenType.Semicolon);
+        // 标识符是什么？
         String name = token.getValueString();
         var symbol = symbolTable.get(name);
         if (symbol == null) {
@@ -376,20 +390,17 @@ public final class Analyser {
 
     private void analyseItem() throws CompileError {
         // 项 -> 因子 (乘法运算符 因子)*
-
         analyseFactor();
         // 因子
 
         while (true) {
             // 预读可能是运算符的 token
             Token op = peek();
-
             if (op.getTokenType() != TokenType.Mult && op.getTokenType() != TokenType.Div) {
                 break;
             }
             // 运算符
             next();
-            
             analyseFactor();
             // 因子
 
@@ -416,29 +427,39 @@ public final class Analyser {
         }
 
         if (check(TokenType.Ident)) {
-            // 调用相应的处理函数
-            var nameToken=expect(TokenType.Ident);
-            if(!this.symbolTable.get(nameToken.getValueString()).isInitialized())
-                throw new AnalyzeError(ErrorCode.NotInitialized,nameToken.getStartPos());
-            instructions.add(new Instruction(Operation.LOD,getOffset(nameToken.getValueString(),nameToken.getStartPos())));
+            // 是标识符
+            var token=expect(TokenType.Ident);
+            // 加载标识符的值
+            String name = /* 快填 */ token.getValueString();
+            var symbol = symbolTable.get(name);
+            if (symbol == null) {
+                // 没有这个标识符
+                throw new AnalyzeError(ErrorCode.NotDeclared, /* 当前位置 */ token.getStartPos());
+            } else if (!symbol.isInitialized) {
+                // 标识符没初始化
+                throw new AnalyzeError(ErrorCode.NotInitialized, /* 当前位置 */ token.getStartPos());
+            }
+            var offset = getOffset(name, token.getStartPos());
+            instructions.add(new Instruction(Operation.LOD, offset));
         } else if (check(TokenType.Uint)) {
             // 是整数
             // 加载整数值
-            int value = (int)expect(TokenType.Uint).getValue();
+            int value = (int)expect(TokenType.Uint).getValue();;
             instructions.add(new Instruction(Operation.LIT, value));
         } else if (check(TokenType.LParen)) {
+            // 是表达式
+            // 调用相应的处理函数
             expect(TokenType.LParen);
             analyseExpression();
             expect(TokenType.RParen);
-            // 是表达式
-            // 调用相应的处理函数
         } else {
             // 都不是，摸了
             throw new ExpectedTokenError(List.of(TokenType.Ident, TokenType.Uint, TokenType.LParen), next());
         }
+
         if (negate) {
             instructions.add(new Instruction(Operation.SUB));
         }
-        // throw new Error("Not implemented");
+        //throw new Error("Not implemented");
     }
 }
